@@ -85,12 +85,6 @@ export default function App () {
 
   useEffect(() => {
     async function getMovies () {
-      if (query.length <= 3) {
-        setMovies([])
-        setErrorMessage("")
-        return
-      }
-
       try {
         setIsLoading(true)
         const res = await fetch(`http://www.omdbapi.com/?apikey=${key}&s=${query}`)
@@ -107,6 +101,12 @@ export default function App () {
       } finally {
         setIsLoading(false)
       }
+    }
+
+    if (query.length <= 3) {
+      setMovies([])
+      setErrorMessage("")
+      return
     }
 
     getMovies()
@@ -213,7 +213,7 @@ function Box ({ children }) {
   return (
     <div className="box">
       <button className="btn-toggle" onClick={ () => setIsOpen((prevState) => !prevState) }>
-        { isOpen ? "–" : "+" }
+        { isOpen ? "-" : "+" }
       </button>
       { isOpen && children }
     </div>
@@ -289,6 +289,7 @@ function MovieDetails ({ selectedID, onCloseMovie }) {
       setErrorMessage("")
       try {
         setIsLoading(true)
+        setErrorMessage("")
         const res = await fetch(`http://www.omdbapi.com/?apikey=${key}&i=${selectedID}`)
         const data = await res.json()
         setMovie(data)
