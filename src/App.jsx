@@ -48,7 +48,7 @@ const tempWatchedData = [
   },
 ];
 
-const key = '9d073eb3'  // OMDB API Key (account = tabish@yahoo.com)
+const KEY = '9d073eb3'  // OMDB API Key (account = tabish@yahoo.com)
 const average = (arr) => arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
 export default function App () {
@@ -83,11 +83,25 @@ export default function App () {
     setSelectedID(null)
   }
 
+  function handleAddWatched (newMovie) {
+    const originalElement = watched.find(element => element.imdbID === newMovie.imdbID)
+    const originalIndex = watched.indexOf(originalElement)
+
+    if (newMovie.userRating > 0) {
+      if (originalIndex === -1) {
+        setWatched(prevState => [...prevState, newMovie])
+      } else if (originalElement?.userRating !== newMovie.userRating) {
+        setWatched(watched.splice(originalIndex, 1))
+        setWatched([...watched, newMovie])
+      }
+    }
+  }
+
   useEffect(() => {
     async function getMovies () {
       try {
         setIsLoading(true)
-        const res = await fetch(`http://www.omdbapi.com/?apikey=${key}&s=${query}`)
+        const res = await fetch(`http://www.omdbapi.com/?apikey=${KEY}&s=${query}`)
         const data = await res.json()
 
         if (!res.ok) throw new Error("Something went wrong in retrieving movies.")
@@ -127,7 +141,12 @@ export default function App () {
         <Box>
           {
             selectedID ?
-              <MovieDetails selectedID={ selectedID } onCloseMovie={ handleCloseMovie } /> :
+              <MovieDetails
+                selectedID={ selectedID }
+                watched={ watched }
+                onCloseMovie={ handleCloseMovie }
+                onAddWatched={ handleAddWatched }
+              /> :
               <>
                 <WatchedSummary watched={ watched } />
                 <WatchedMoviesList watched={ watched } />
@@ -267,15 +286,20 @@ function Movie ({ movie, onSelectMovie }) {
   )
 }
 
-function MovieDetails ({ selectedID, onCloseMovie }) {
+function MovieDetails ({ selectedID, onCloseMovie, onAddWatched, watched }) {
   const [movie, setMovie] = useState({})
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+  const [userRating, setUserRating] = useState("")
+
+  const isWatched = watched.map(element => element.imdbID).includes(selectedID)
+  const watchedUserRating = watched.find(element => element.imdbID === selectedID)?.userRating
 
   const {
     Title: title,
     Poster: poster,
     Runtime: runtime,
+    Year: year,
     imdbRating,
     Plot: plot,
     Released: released,
@@ -284,13 +308,27 @@ function MovieDetails ({ selectedID, onCloseMovie }) {
     Genre: genre
   } = movie
 
+  function handleAdd () {
+    const newWatchedMovie = {
+      imdbID: selectedID,
+      title,
+      year,
+      poster,
+      imdbRating: Number(imdbRating),
+      runtime: Number(runtime.split("").at(0)),
+      userRating
+    }
+    onAddWatched(newWatchedMovie)
+    onCloseMovie()
+  }
+
   useEffect(() => {
     async function getMovieDetails () {
       setErrorMessage("")
       try {
         setIsLoading(true)
         setErrorMessage("")
-        const res = await fetch(`http://www.omdbapi.com/?apikey=${key}&i=${selectedID}`)
+        const res = await fetch(`http://www.omdbapi.com/?apikey=${KEY}&i=${selectedID}`)
         const data = await res.json()
         setMovie(data)
 
@@ -323,7 +361,20 @@ function MovieDetails ({ selectedID, onCloseMovie }) {
           </header>
           <section>
             <div className="rating">
-              <StarRating maxRating={ 10 } size={ 24 } />
+              { !isWatched &&
+                <>
+                  <StarRating maxRating={ 10 } size={ 24 } onSetRating={ setUserRating } />
+                  <button className="btn-add" onClick={ handleAdd }>+ Add to list</button>
+                </>
+
+              }
+              { isWatched &&
+                <>
+                  <p>Movie exist in the list and you rated { watchedUserRating } ⭐️</p>
+                  <StarRating maxRating={ 10 } size={ 24 } onSetRating={ setUserRating } />
+                  <button className="btn-add" onClick={ handleAdd }>Update Rating</button>
+                </>
+              }
             </div>
             <p><em>{ plot }</em></p>
             <p>Starring { actors }</p>
@@ -337,9 +388,9 @@ function MovieDetails ({ selectedID, onCloseMovie }) {
 
 
 function WatchedSummary ({ watched }) {
-  const avgImdbRating = average(watched.map((movie) => movie.imdbRating));
-  const avgUserRating = average(watched.map((movie) => movie.userRating));
-  const avgRuntime = average(watched.map((movie) => movie.runtime));
+  const avgImdbRating = average(watched.map((movie) => movie.imdbRating)).toFixed(2);
+  const avgUserRating = average(watched.map((movie) => movie.userRating)).toFixed(2);
+  const avgRuntime = average(watched.map((movie) => movie.runtime)).toFixed(2);
 
   return (
     <div className="summary">
@@ -379,8 +430,8 @@ function WatchedMoviesList ({ watched }) {
 function WatchedMovie ({ movie }) {
   return (
     <li >
-      <img src={ movie.Poster } alt={ `${movie.Title} poster` } />
-      <h3>{ movie.Title }</h3>
+      <img src={ movie.poster } alt={ `${movie.title} poster` } />
+      <h3>{ movie.title }</h3>
       <div>
         <p>
           <span>⭐️</span>
