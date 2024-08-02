@@ -103,21 +103,29 @@ export default function App () {
   }
 
 
+  // using effect to intract outside world which in here is fetching movies from API
   useEffect(() => {
+    const controller = new AbortController()
+
     async function getMovies () {
       try {
         setIsLoading(true)
-        const res = await fetch(`http://www.omdbapi.com/?apikey=${KEY}&s=${query}`)
+        setErrorMessage("")
+
+        const res = await fetch(`http://www.omdbapi.com/?apikey=${KEY}&s=${query}`, { signal: controller.signal })
         const data = await res.json()
 
         if (!res.ok) throw new Error("Something went wrong in retrieving movies.")
         if (data.Response === "False") throw new Error(data.Error)
 
         setMovies(data.Search)
+        setErrorMessage("")
       } catch (error) {
-        error instanceof TypeError ?
-          setErrorMessage("You're offline.") :
-          setErrorMessage(error.message)
+        if (error.name !== "AbortError") {
+          error instanceof TypeError ?
+            setErrorMessage("You're offline.") :
+            setErrorMessage(error.message)
+        }
       } finally {
         setIsLoading(false)
       }
@@ -129,7 +137,11 @@ export default function App () {
       return
     }
 
+    handleCloseMovie()
     getMovies()
+
+    // returning clean-up function to be executed before next re-render which aborts the previous API call
+    return function () { controller.abort() }
   }, [query])
 
   return (
@@ -328,6 +340,23 @@ function MovieDetails ({ selectedID, onCloseMovie, onAddWatched, watched }) {
     onCloseMovie()
   }
 
+
+  // listening to escape key to close movie detail (we must have cleanup function returned)
+  useEffect(() => {
+    function callback (e) {
+      if (e.code === "Escape") {
+        onCloseMovie()
+      }
+    }
+    document.addEventListener("keydown", callback)
+
+    return () => {
+      document.removeEventListener('keydown', callback)
+    }
+  }, [onCloseMovie])
+
+
+  // intracting outside world to fetch selected movie detail
   useEffect(() => {
     async function getMovieDetails () {
       setErrorMessage("")
@@ -352,10 +381,12 @@ function MovieDetails ({ selectedID, onCloseMovie, onAddWatched, watched }) {
   }, [selectedID])
 
 
+  // intracting outside world using this effect which resets document.title
   useEffect(() => {
     if (!title) return
     document.title = `Movie | ${title}`
 
+    // returning function to reset docuemnt.title back to original text
     return () => { document.title = "usePopcorn" }
   }, [title])
 
