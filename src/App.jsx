@@ -13,7 +13,7 @@ export default function App () {
   const [errorMessage, setErrorMessage] = useState("")
   const [selectedID, setSelectedID] = useState(null)
 
-  // setting state default using data from local storage
+  // setting state default using data from local storage (local storage only keep data in string)
   const [watched, setWatched] = useState(() => {
     const storedData = localStorage.getItem("watched")
     return JSON.parse(storedData)
@@ -51,7 +51,7 @@ export default function App () {
   }
 
 
-  // using effect to store data to local storage (external resource)
+  // using effect to store data to local storage (external resource) // local storage keeps data only in string
   useEffect(() => {
     localStorage.setItem("watched", JSON.stringify(watched))
   }, [watched])
