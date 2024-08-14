@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import StarRating from "./StarRating";
 
 
@@ -177,6 +177,27 @@ function Logo () {
 
 
 function Search ({ query, setQuery }) {
+  const inputElement = useRef(null)
+
+  useEffect(() => {
+
+    function callback (e) {
+      if (document.activeElement === inputElement.current) return
+      if (e.code === "Enter") {
+        inputElement.current.focus()
+        setQuery("")
+      }
+    }
+
+    document.addEventListener("keydown", callback)
+    return () => { document.removeEventListener("keydown", callback) }
+  }, [setQuery])
+
+  // useEffect(() => {
+  //   const element = document.querySelector(".search")
+  //   console.log(element);
+  //   element.focus()
+  // }, [])
 
   return (
     <input
@@ -185,6 +206,7 @@ function Search ({ query, setQuery }) {
       placeholder="Search movies..."
       value={ query }
       onChange={ (e) => setQuery(e.target.value) }
+      ref={ inputElement }
     />
   )
 }
@@ -264,6 +286,14 @@ function MovieDetails ({ selectedID, onCloseMovie, onAddWatched, watched }) {
   const [errorMessage, setErrorMessage] = useState("")
   const [userRating, setUserRating] = useState("")
 
+  const countRef = useRef(0)
+
+  // the update of countRef variable will servive re-renders
+  // updating countRatingDecisions in the watched movie using countRef updates
+  useEffect(() => {
+    if (userRating) countRef.current += 1
+  }, [userRating])
+
   const isWatched = watched.map(element => element.imdbID).includes(selectedID)
   const watchedUserRating = watched.find(element => element.imdbID === selectedID)?.userRating
 
@@ -291,7 +321,8 @@ function MovieDetails ({ selectedID, onCloseMovie, onAddWatched, watched }) {
       poster,
       imdbRating: Number(imdbRating),
       runtime: Number(runtime.split("").at(0)),
-      userRating
+      userRating,
+      countRatingDecisions: countRef.current
     }
     onAddWatched(newWatchedMovie)
     onCloseMovie()
@@ -363,12 +394,14 @@ function MovieDetails ({ selectedID, onCloseMovie, onAddWatched, watched }) {
           </header>
           <section>
             <div className="rating">
+
+              { errorMessage ? <p>{ errorMessage }</p> : <></> }
+
               { !isWatched &&
                 <>
                   <StarRating maxRating={ 10 } size={ 24 } onSetRating={ setUserRating } />
                   <button className="btn-add" onClick={ handleAdd }>+ Add to list</button>
                 </>
-
               }
               { isWatched &&
                 <>
@@ -423,7 +456,10 @@ function WatchedSummary ({ watched }) {
 function WatchedMoviesList ({ watched, onDeleteWatched }) {
   return (
     <ul className="list">
-      { watched.map((movie) => <WatchedMovie movie={ movie } key={ movie.imdbID } onDeleteWatched={ onDeleteWatched } />) }
+      { watched.map((movie) => <WatchedMovie
+        movie={ movie }
+        key={ movie.imdbID }
+        onDeleteWatched={ onDeleteWatched } />) }
     </ul>
   )
 }
