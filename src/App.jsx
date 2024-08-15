@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import StarRating from "./StarRating";
+import { useMovies } from "./useMovies";
 
 
 const KEY = '9d073eb3'  // OMDB API Key (account = tabish@yahoo.com)
@@ -7,11 +8,9 @@ const average = (arr) => arr.reduce((acc, cur, i, arr) => acc + cur / arr.length
 
 export default function App () {
   const [query, setQuery] = useState("")
-  const [movies, setMovies] = useState([])
-  // const [watched, setWatched] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
   const [selectedID, setSelectedID] = useState(null)
+  const { movies, isLoading, errorMessage } = useMovies(query)
+  // const [watched, setWatched] = useState([])
 
   // setting state default using data from local storage (local storage only keep data in string)
   const [watched, setWatched] = useState(() => {
@@ -55,48 +54,6 @@ export default function App () {
   useEffect(() => {
     localStorage.setItem("watched", JSON.stringify(watched))
   }, [watched])
-
-
-  // using effect to intract outside world which in here is fetching movies from API
-  useEffect(() => {
-    const controller = new AbortController()
-
-    async function getMovies () {
-      try {
-        setIsLoading(true)
-        setErrorMessage("")
-
-        const res = await fetch(`http://www.omdbapi.com/?apikey=${KEY}&s=${query}`, { signal: controller.signal })
-        const data = await res.json()
-
-        if (!res.ok) throw new Error("Something went wrong in retrieving movies.")
-        if (data.Response === "False") throw new Error(data.Error)
-
-        setMovies(data.Search)
-        setErrorMessage("")
-      } catch (error) {
-        if (error.name !== "AbortError") {
-          error instanceof TypeError ?
-            setErrorMessage("You're offline.") :
-            setErrorMessage(error.message)
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    if (query.length <= 3) {
-      setMovies([])
-      setErrorMessage("")
-      return
-    }
-
-    handleCloseMovie()
-    getMovies()
-
-    // returning clean-up function to be executed before next re-render which aborts the previous API call
-    return function () { controller.abort() }
-  }, [query])
 
   return (
     <>
