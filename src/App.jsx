@@ -279,9 +279,9 @@ function MovieDetails ({ selectedID, onCloseMovie, onAddWatched, watched }) {
         if (!res.ok) throw new Error("Something went wrong in getting movie detail")
         if (data.Response === "False") throw new Error(data.Error)
       } catch (error) {
-        error instanceof TypeError ?
-          setErrorMessage("You're offline.") :
-          setErrorMessage(error.message)
+        // error instanceof TypeError ?
+        //   setErrorMessage("You're offline.") :
+        setErrorMessage(error.message)
       } finally {
         setIsLoading(false)
       }
