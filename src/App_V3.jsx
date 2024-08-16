@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import StarRating from "./StarRating";
 import { useMovies } from "./useMovies";
 import { useLocalStorageState } from "./useLocalStorageState";
-import { useKey } from "./useKey";
 
 
 const KEY = '9d073eb3'  // OMDB API Key (account = tabish@yahoo.com)
@@ -125,11 +124,25 @@ function Logo () {
 function Search ({ query, setQuery }) {
   const inputElement = useRef(null)
 
-  useKey("Enter", () => {
-    if (document.activeElement === inputElement.current) return
-    inputElement.current.focus()
-    setQuery("")
-  })
+  useEffect(() => {
+
+    function callback (e) {
+      if (document.activeElement === inputElement.current) return
+      if (e.code === "Enter") {
+        inputElement.current.focus()
+        setQuery("")
+      }
+    }
+
+    document.addEventListener("keydown", callback)
+    return () => { document.removeEventListener("keydown", callback) }
+  }, [setQuery])
+
+  // useEffect(() => {
+  //   const element = document.querySelector(".search")
+  //   console.log(element);
+  //   element.focus()
+  // }, [])
 
   return (
     <input
@@ -262,7 +275,18 @@ function MovieDetails ({ selectedID, onCloseMovie, onAddWatched, watched }) {
 
 
   // listening to escape key to close movie detail (we must have cleanup function returned)
-  useKey("Escape", onCloseMovie)
+  // useEffect(() => {
+  //   function callback (e) {
+  //     if (e.code === "Escape") {
+  //       onCloseMovie()
+  //     }
+  //   }
+  //   document.addEventListener("keydown", callback)
+
+  //   return () => {
+  //     document.removeEventListener('keydown', callback)
+  //   }
+  // }, [onCloseMovie])
 
 
   // intracting outside world to fetch selected movie detail

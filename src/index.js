@@ -2,7 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
-// import Challange from "./Challange"
+// import Challange from "./Challange1"
+// import Challange from "./Challange2"
 // import StarRating from './StarRating';
 
 
