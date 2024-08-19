@@ -5,7 +5,7 @@ import { useLocalStorageState } from "./useLocalStorageState";
 import { useKey } from "./useKey";
 
 
-const KEY = '9d073eb3'  // OMDB API Key (account = tabish@yahoo.com)
+const KEY = process.env.REACT_APP_API_KEY // OMDB API Key (account = tabish@yahoo.com)
 const average = (arr) => arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0)
 
 export default function App () {

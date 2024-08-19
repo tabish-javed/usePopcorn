@@ -6,7 +6,6 @@ import App from './App';
 // import Challange from "./Challange2"
 // import StarRating from './StarRating';
 
-
 /* function Test () {
   const [movieRating, setMovieRating] = useState(0)
 

@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react"
 
-const KEY = '9d073eb3'  // OMDB API Key (account = tabish@yahoo.com)
+// const KEY = process.env.API_KEY  // OMDB API Key (account = tabish@yahoo.com)
 
 export function useMovies (query) {
-
+  const KEY = process.env.REACT_APP_API_KEY
   const [movies, setMovies] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
 
   // using effect to intract outside world which in here is fetching movies from API
   useEffect(() => {
+
     const controller = new AbortController()
 
     async function getMovies () {
